@@ -1,13 +1,13 @@
 package simulation
 
-import AGENT_SPAWN_MARGIN
-import AREA_HEIGHT
-import AREA_WIDTH
 import angle
 import clampAngleChange
 import clampLength
 import org.openrndr.math.Vector2
 import setLength
+import simulation.Simulation.Settings.AGENT_SPAWN_MARGIN
+import simulation.Simulation.Settings.AREA_HEIGHT
+import simulation.Simulation.Settings.AREA_WIDTH
 import unitWithAngle
 import kotlin.math.max
 import kotlin.random.Random

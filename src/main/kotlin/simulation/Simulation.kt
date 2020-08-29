@@ -18,7 +18,7 @@ object Simulation {
 
     fun init() {
         agents.clear()
-        repeat(500) {
+        repeat(Settings.AGENT_AMOUNT) {
             agents.add(Boid.createRandomBoid())
         }
     }
@@ -60,7 +60,7 @@ object Simulation {
                 }
             }
         }
-        
+
         private fun Agent.getShape() = fishShape.transform(
             Matrix44.translate(position.x, position.y, 0.0)
                     * Matrix44.rotateZ(Math.toDegrees(atan2(velocity.y, velocity.x)))
@@ -68,14 +68,16 @@ object Simulation {
     }
 
     object Settings {
-        const val WALL_AVOIDANCE_FACTOR = 1e4
+        const val AGENT_AMOUNT = 1000
+        const val AREA_WIDTH = 1600.0
+        const val AREA_HEIGHT = 900.0
+        const val AGENT_SPAWN_MARGIN = 100.0
 
+        const val WALL_AVOIDANCE_FACTOR = 1e4
         @DoubleParameter("separation", 0.0, 5000.0)
         var SEPARATION_FACTOR = 500.0
-
         @DoubleParameter("alignment", 0.0, 10.0)
         var ALIGNMENT_FACTOR = 1.5
-
         @DoubleParameter("cohesion", 0.0, 1.0)
         var COHESION_FACTOR = 0.1
     }
