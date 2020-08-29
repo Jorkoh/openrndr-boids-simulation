@@ -55,6 +55,7 @@ fun main() = application {
                 draw {
                     Simulation.Renderer.renderPredators(drawer)
                 }
+                post(GaussianBloom().apply { sigma = 2.0 }, { gain = cos(seconds * 0.8 * PI + PI) * 8.0 + 2.0 })
             }
             layer {
                 draw {
