@@ -1,35 +1,32 @@
 package simulation
 
-import angle
 import clampAngleChange
 import clampLength
 import org.openrndr.math.Vector2
 import setLength
 import simulation.Simulation.Settings.AGENT_SPAWN_MARGIN
-import simulation.Simulation.Settings.ALIGNMENT_FACTOR
 import simulation.Simulation.Settings.AREA_HEIGHT
 import simulation.Simulation.Settings.AREA_WIDTH
-import simulation.Simulation.Settings.COHESION_FACTOR
-import simulation.Simulation.Settings.PREDATOR_AVOIDANCE_FACTOR
+import simulation.Simulation.Settings.BOID_CHASING_FACTOR
 import simulation.Simulation.Settings.WALL_AVOIDANCE_FACTOR
 import unitWithAngle
 import kotlin.math.max
 import kotlin.random.Random
 
-class Boid(
+class Predator(
     override var position: Vector2,
     override var velocity: Vector2,
     override var forces: MutableList<Vector2> = mutableListOf()
 ) : Agent {
     companion object {
-        const val PERCEPTION_RADIUS = 60.0
+        const val PERCEPTION_RADIUS = 120.0
         const val PERCEPTION_CONE_DEGREES = 360.0
 
-        const val MAX_TURN_RATE = 30.0
+        const val MAX_TURN_RATE = 5.0
         const val MINIMUM_SPEED = 2.0
-        const val MAXIMUM_SPEED = 8.0
+        const val MAXIMUM_SPEED = 6.0
 
-        fun createRandomBoid() = Boid(
+        fun createRandomPredator() = Predator(
             Vector2(
                 Random.nextDouble(AGENT_SPAWN_MARGIN, (AREA_WIDTH - AGENT_SPAWN_MARGIN)),
                 Random.nextDouble(AGENT_SPAWN_MARGIN, (AREA_HEIGHT - AGENT_SPAWN_MARGIN))
@@ -40,18 +37,17 @@ class Boid(
     }
 
     override fun interact(sameSpecies: List<Agent>, differentSpecies: List<Agent>) {
-        val visibleBoids = sameSpecies.visibleToAgent(PERCEPTION_RADIUS, PERCEPTION_CONE_DEGREES)
-        val visiblePredators = differentSpecies.visibleToAgent(PERCEPTION_RADIUS, PERCEPTION_CONE_DEGREES)
-
+        val visibleBoids = differentSpecies.visibleToAgent(PERCEPTION_RADIUS, PERCEPTION_CONE_DEGREES)
+        val visiblePredators = sameSpecies.visibleToAgent(PERCEPTION_RADIUS, PERCEPTION_CONE_DEGREES)
         forces.clear()
+
         forces.add(wallAvoidanceForce())
-        if (visibleBoids.isNotEmpty()) {
-            forces.add(separationRuleForce(visibleBoids))
-            forces.add(alignmentRuleForce(visibleBoids))
-            forces.add(cohesionRuleForce(visibleBoids))
+        if (differentSpecies.isNotEmpty()) {
+            forces.add(boidChasingForce(visibleBoids))
         }
-        forces.add(predatorAvoidanceForce(visiblePredators))
-        // TODO repulsion from predators
+        if(sameSpecies.isNotEmpty()){
+            forces.add(rivalAvoidanceForce(visiblePredators))
+        }
 
         velocity = calculateNewVelocity()
     }
@@ -75,38 +71,24 @@ class Boid(
         return force
     }
 
-    private fun separationRuleForce(visibleBoids: List<Agent>): Vector2 {
+    private fun boidChasingForce(visibleBoids: List<Agent>): Vector2 {
         var force = Vector2.ZERO
-        visibleBoids.forEach { otherAgent ->
-            val positionDifference = position - otherAgent.position
-            force += positionDifference.normalized() * (1 / positionDifference.squaredLength)
+        visibleBoids.minBy { boid ->
+            position.squaredDistanceTo(boid.position)
+        }?.let { closestBoid ->
+            force = (closestBoid.position - position).normalized
         }
-        return force * Simulation.Settings.SEPARATION_FACTOR
+
+        return force * BOID_CHASING_FACTOR
     }
 
-    private fun alignmentRuleForce(visibleBoids: List<Agent>): Vector2 {
-        var force = Vector2.ZERO
-        visibleBoids.forEach { otherAgent ->
-            force += Vector2.unitWithAngle(otherAgent.velocity.angle())
-        }
-        return force.normalized() * ALIGNMENT_FACTOR
-    }
-
-    private fun cohesionRuleForce(visibleBoids: List<Agent>): Vector2 {
-        var force = Vector2.ZERO
-        visibleBoids.forEach { otherAgent ->
-            force += otherAgent.position
-        }
-        return (force / visibleBoids.size.toDouble() - position) * COHESION_FACTOR
-    }
-
-    private fun predatorAvoidanceForce(visiblePredators: List<Agent>): Vector2 {
+    private fun rivalAvoidanceForce(visiblePredators: List<Agent>): Vector2 {
         var force = Vector2.ZERO
         visiblePredators.forEach { predator ->
             val positionDifference = position - predator.position
             force += positionDifference.normalized() * (1 / positionDifference.squaredLength)
         }
-        return force * PREDATOR_AVOIDANCE_FACTOR
+        return force * Simulation.Settings.RIVAL_AVOIDANCE_FACTOR
     }
 
     private fun calculateNewVelocity(): Vector2 {

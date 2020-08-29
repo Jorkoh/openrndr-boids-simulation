@@ -4,10 +4,10 @@ import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 import org.gradle.nativeplatform.platform.internal.DefaultNativePlatform
 
 /* the name of this project, default is the template version but you are free to change these */
-group = "org.openrndr.template"
-version = "0.3.13"
+group = "com.jorkoh.boids"
+version = "0.0.1"
 
-val applicationMainClass = "TemplateProgramKt"
+val applicationMainClass = "Main"
 
 /*  Which additional (ORX) libraries should be added to this project. */
 val orxFeatures = setOf(

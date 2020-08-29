@@ -5,12 +5,14 @@ import org.openrndr.math.Vector2
 import kotlin.math.abs
 
 interface Agent {
-    val position: Vector2
-    val velocity: Vector2
-    val forces: List<Vector2>
+    var position: Vector2
+    var velocity: Vector2
+    var forces: MutableList<Vector2>
 
-    fun interact(agents: List<Agent>)
-    fun move()
+    fun interact(sameSpecies: List<Agent>, differentSpecies : List<Agent>)
+    fun move(){
+        position += velocity
+    }
 
     // TODO Optimize this with region algorithm
     fun List<Agent>.visibleToAgent(perceptionRadius: Double, perceptionConeDegrees: Double): List<Agent> {

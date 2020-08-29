@@ -1,6 +1,7 @@
 import org.openrndr.application
 import org.openrndr.extra.compositor.compose
 import org.openrndr.extra.compositor.draw
+import org.openrndr.extra.compositor.layer
 import org.openrndr.extra.compositor.post
 import org.openrndr.extra.fx.blur.GaussianBloom
 import org.openrndr.extra.fx.color.ChromaticAberration
@@ -43,11 +44,23 @@ fun main() = application {
 
         // Declare the composition to render
         val composition = compose {
-            draw {
-                Simulation.Renderer.render(drawer)
+            layer {
+                draw {
+                    Simulation.Renderer.renderBoids(drawer)
+                }
+                post(GaussianBloom().apply { sigma = 2.0 }, { gain = cos(seconds * 0.8 * PI) * 2.0 + 2.0 })
+                post(ChromaticAberration(), { aberrationFactor = cos(seconds * 0.8 * 0.5 * PI) * 4.0 })
             }
-            post(GaussianBloom().apply { sigma = 2.0 }, { gain = cos(seconds * 0.8 * PI) * 2.0 + 2.0 })
-            post(ChromaticAberration(), { aberrationFactor = cos(seconds * 0.8 * 0.5 * PI) * 4.0 })
+            layer {
+                draw {
+                    Simulation.Renderer.renderPredators(drawer)
+                }
+            }
+            layer {
+                draw {
+                    Simulation.Renderer.renderDebug(drawer)
+                }
+            }
         }
 
         // Install the gui
@@ -63,7 +76,7 @@ fun main() = application {
 
             // (Optional) for performance checks
 //            numFrames++
-//            if(numFrames % 375 == 0){
+//            if (numFrames % 375 == 0) {
 //                println("FPS: ${numFrames / (seconds - secondsLastPrint)}")
 //                numFrames = 0
 //                secondsLastPrint = seconds
