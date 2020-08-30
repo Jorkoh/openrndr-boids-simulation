@@ -5,7 +5,7 @@ import kotlin.math.*
 
 // TODO way too many radians/angle transformations, it's cheap but not free
 // TODO floats are not used (because openrndr uses Double) but could be used
-fun Vector2.Companion.unitWithAngle(angle : Double): Vector2 {
+fun Vector2.Companion.unitWithAngle(angle: Double): Vector2 {
     val theta = toRadians(angle)
     return Vector2(cos(theta), sin(theta))
 }
@@ -55,4 +55,22 @@ fun Vector2.clampLength(min: Double, max: Double): Vector2 {
         squaredLength < squaredMin -> this * (sqrt(squaredMin / squaredLength))
         else -> this
     }
+}
+
+data class Vector2WithCachedAngle(val x: Double, val y: Double) {
+    var vector = Vector2(x, y)
+        set(value) {
+            field = value
+            angleCache = null
+        }
+
+    private var angleCache: Double? = null
+    val angle: Double
+        get() {
+            if (angleCache == null) {
+                angleCache = vector.angle()
+            }
+            // TODO fix this with proper nullability here
+            return angleCache!!
+        }
 }

@@ -22,19 +22,19 @@ object Simulation {
         const val AREA_HEIGHT = 900.0
         const val AGENT_SPAWN_MARGIN = 100.0
 
-        const val WALL_AVOIDANCE_FACTOR = 1e4
-        const val PREDATOR_AVOIDANCE_FACTOR = 1e7
-        const val BOID_CHASING_FACTOR = 3.0
-        const val RIVAL_AVOIDANCE_FACTOR = 1e7
+        const val WALL_AVOIDANCE_FACTOR = 5e3
+        const val PREDATOR_AVOIDANCE_FACTOR = 5e6
+        const val BOID_CHASING_FACTOR = 1.5
+        const val RIVAL_AVOIDANCE_FACTOR = 5e6
 
-        @DoubleParameter("separation", 0.0, 5000.0)
-        var SEPARATION_FACTOR = 500.0
+        @DoubleParameter("separation", 0.0, 2500.0)
+        var SEPARATION_FACTOR = 250.0
 
-        @DoubleParameter("alignment", 0.0, 10.0)
-        var ALIGNMENT_FACTOR = 1.5
+        @DoubleParameter("alignment", 0.0, 5.0)
+        var ALIGNMENT_FACTOR = 0.75
 
-        @DoubleParameter("cohesion", 0.0, 1.0)
-        var COHESION_FACTOR = 0.1
+        @DoubleParameter("cohesion", 0.0, 0.5)
+        var COHESION_FACTOR = 0.05
     }
 
     private val agents

@@ -1,11 +1,15 @@
 import org.openrndr.application
+import org.openrndr.color.ColorRGBa
 import org.openrndr.extra.compositor.compose
 import org.openrndr.extra.compositor.draw
 import org.openrndr.extra.compositor.layer
 import org.openrndr.extra.compositor.post
+import org.openrndr.extra.fx.blur.FrameBlur
 import org.openrndr.extra.fx.blur.GaussianBloom
 import org.openrndr.extra.fx.color.ChromaticAberration
 import org.openrndr.extra.gui.GUI
+import org.openrndr.extra.noise.simplex
+import org.openrndr.math.Vector2
 import simulation.Simulation
 import simulation.Simulation.Settings.AREA_HEIGHT
 import simulation.Simulation.Settings.AREA_WIDTH
@@ -21,8 +25,8 @@ fun main() = application {
 
     program {
         // (Optional) for performance checks
-//        var numFrames = 0
-//        var secondsLastPrint = 0.0
+        var numFrames = 0
+        var secondsLastPrint = 0.0
 
         // Initialize the simulation
         Simulation.init()
@@ -44,6 +48,27 @@ fun main() = application {
 
         // Declare the composition to render
         val composition = compose {
+            layer {
+                draw {
+                    drawer.fill = ColorRGBa.WHITE
+
+                    val resolution = 8
+                    val points = mutableListOf<Vector2>()
+                    for (y in 0 until height / resolution) {
+                        for (x in 0 until width / resolution) {
+                            val xDouble = x.toDouble()
+                            val yDouble = y.toDouble()
+
+                            val simplex = simplex(100, xDouble + seconds, yDouble + seconds)
+                            if (simplex > 0.712) {
+                                points.add(Vector2(xDouble * resolution, yDouble * resolution))
+                            }
+                        }
+                    }
+                    drawer.points(points)
+                }
+                post(FrameBlur().apply { blend = 0.1 })
+            }
             layer {
                 draw {
                     Simulation.Renderer.renderBoids(drawer)
@@ -68,20 +93,20 @@ fun main() = application {
         extend(gui)
 
         // (Optional) Install a screen recorder to get a video
-//        extend(ScreenRecorder())
+//        extend(ScreenRecorder().apply { frameRate = 60 })
 
         // Install the rendering loop
         extend {
             Simulation.update()
-            composition.draw(drawer)
+//            composition.draw(drawer)
 
             // (Optional) for performance checks
-//            numFrames++
-//            if (numFrames % 375 == 0) {
-//                println("FPS: ${numFrames / (seconds - secondsLastPrint)}")
-//                numFrames = 0
-//                secondsLastPrint = seconds
-//            }
+            numFrames++
+            if (numFrames % 375 == 0) {
+                println("FPS: ${numFrames / (seconds - secondsLastPrint)}")
+                numFrames = 0
+                secondsLastPrint = seconds
+            }
         }
     }
 }

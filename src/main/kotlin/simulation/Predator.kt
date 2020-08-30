@@ -22,9 +22,9 @@ class Predator(
         const val PERCEPTION_RADIUS = 120.0
         const val PERCEPTION_CONE_DEGREES = 360.0
 
-        const val MAX_TURN_RATE = 5.0
-        const val MINIMUM_SPEED = 2.0
-        const val MAXIMUM_SPEED = 6.0
+        const val MAX_TURN_RATE = 2.5
+        const val MINIMUM_SPEED = 1.0
+        const val MAXIMUM_SPEED = 3.0
 
         fun createRandomPredator() = Predator(
             Vector2(

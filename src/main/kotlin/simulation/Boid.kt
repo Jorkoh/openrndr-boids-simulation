@@ -25,9 +25,9 @@ class Boid(
         const val PERCEPTION_RADIUS = 60.0
         const val PERCEPTION_CONE_DEGREES = 360.0
 
-        const val MAX_TURN_RATE = 30.0
-        const val MINIMUM_SPEED = 2.0
-        const val MAXIMUM_SPEED = 8.0
+        const val MAX_TURN_RATE = 15.0
+        const val MINIMUM_SPEED = 1.0
+        const val MAXIMUM_SPEED = 4.0
 
         fun createRandomBoid() = Boid(
             Vector2(
