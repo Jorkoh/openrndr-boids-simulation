@@ -1,7 +1,10 @@
 import org.openrndr.math.Vector2
 import java.lang.Math.toDegrees
 import java.lang.Math.toRadians
-import kotlin.math.*
+import kotlin.math.atan2
+import kotlin.math.cos
+import kotlin.math.sin
+import kotlin.math.sqrt
 
 // TODO way too many radians/angle transformations, it's cheap but not free
 // TODO floats are not used (because openrndr uses Double) but could be used
@@ -31,6 +34,7 @@ fun Double.angleDifference(secondAngle: Double): Double {
 fun Vector2.angleDifference(secondVector: Vector2) =
     toDegrees(atan2(this.crs(secondVector), dot(secondVector)))
 
+
 fun Vector2.clampAngleChange(secondVector: Vector2, maxAngleChange: Double): Vector2 {
     val previousVectorAngle = secondVector.angle()
     val turnRate = angle().angleDifference(previousVectorAngle)
@@ -40,6 +44,23 @@ fun Vector2.clampAngleChange(secondVector: Vector2, maxAngleChange: Double): Vec
         }
         turnRate < -maxAngleChange -> {
             setAngle(previousVectorAngle - maxAngleChange)
+        }
+        else -> this
+    }
+}
+
+fun Vector2withAngleCache.clampAngleChange(
+    secondVector: Vector2withAngleCache,
+    maxAngleChange: Double
+): Vector2withAngleCache {
+    val previousVectorAngle = secondVector.angle
+    val turnRate = angle.angleDifference(previousVectorAngle)
+    return when {
+        turnRate > maxAngleChange -> {
+            Vector2withAngleCache(vector.setAngle(previousVectorAngle + maxAngleChange))
+        }
+        turnRate < -maxAngleChange -> {
+            Vector2withAngleCache(vector.setAngle(previousVectorAngle - maxAngleChange))
         }
         else -> this
     }
@@ -57,12 +78,26 @@ fun Vector2.clampLength(min: Double, max: Double): Vector2 {
     }
 }
 
-data class Vector2WithCachedAngle(val x: Double, val y: Double) {
-    var vector = Vector2(x, y)
+// Goes from ~50 to +70 fps at the cost of making the code ugly
+class Vector2withAngleCache {
+    constructor(x: Double, y: Double) {
+        this.vector = Vector2(x, y)
+    }
+
+    constructor(vector: Vector2) {
+        this.vector = vector
+    }
+
+    var vector: Vector2
         set(value) {
+            if (field != value) angleCache = null
             field = value
-            angleCache = null
         }
+    val x
+        get() = vector.x
+
+    val y
+        get() = vector.y
 
     private var angleCache: Double? = null
     val angle: Double

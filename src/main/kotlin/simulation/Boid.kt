@@ -1,6 +1,6 @@
 package simulation
 
-import angle
+import Vector2withAngleCache
 import clampAngleChange
 import clampLength
 import org.openrndr.math.Vector2
@@ -18,7 +18,7 @@ import kotlin.random.Random
 
 class Boid(
     override var position: Vector2,
-    override var velocity: Vector2,
+    override var velocity: Vector2withAngleCache,
     override var forces: MutableList<Vector2> = mutableListOf()
 ) : Agent {
     companion object {
@@ -34,8 +34,8 @@ class Boid(
                 Random.nextDouble(AGENT_SPAWN_MARGIN, (AREA_WIDTH - AGENT_SPAWN_MARGIN)),
                 Random.nextDouble(AGENT_SPAWN_MARGIN, (AREA_HEIGHT - AGENT_SPAWN_MARGIN))
             ),
-            Vector2.unitWithAngle(Random.nextDouble(0.0, 360.0))
-                .setLength(Random.nextDouble(MINIMUM_SPEED, MAXIMUM_SPEED))
+            Vector2withAngleCache(Vector2.unitWithAngle(Random.nextDouble(0.0, 360.0))
+                .setLength(Random.nextDouble(MINIMUM_SPEED, MAXIMUM_SPEED)))
         )
     }
 
@@ -51,9 +51,8 @@ class Boid(
             forces.add(cohesionRuleForce(visibleBoids))
         }
         forces.add(predatorAvoidanceForce(visiblePredators))
-        // TODO repulsion from predators
 
-        velocity = calculateNewVelocity()
+        velocity.vector = calculateNewVelocity()
     }
 
     private fun wallAvoidanceForce(): Vector2 {
@@ -87,7 +86,7 @@ class Boid(
     private fun alignmentRuleForce(visibleBoids: List<Agent>): Vector2 {
         var force = Vector2.ZERO
         visibleBoids.forEach { otherAgent ->
-            force += Vector2.unitWithAngle(otherAgent.velocity.angle())
+            force += Vector2.unitWithAngle(otherAgent.velocity.angle)
         }
         return force.normalized() * ALIGNMENT_FACTOR
     }
@@ -110,16 +109,16 @@ class Boid(
     }
 
     private fun calculateNewVelocity(): Vector2 {
-        var newVelocity = velocity.copy()
+        var newVelocity = Vector2withAngleCache(velocity.vector.copy())
         // Add the forces
         for (force in forces) {
-            newVelocity += force
+            newVelocity.vector += force
         }
         // Clamp the turn rate
         newVelocity = newVelocity.clampAngleChange(velocity, MAX_TURN_RATE)
         // Clamp the speed
-        newVelocity = newVelocity.clampLength(MINIMUM_SPEED, MAXIMUM_SPEED)
+        newVelocity.vector = newVelocity.vector.clampLength(MINIMUM_SPEED, MAXIMUM_SPEED)
 
-        return newVelocity
+        return newVelocity.vector
     }
 }

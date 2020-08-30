@@ -1,17 +1,18 @@
 package simulation
 
+import Vector2withAngleCache
 import angleDifference
 import org.openrndr.math.Vector2
 import kotlin.math.abs
 
 interface Agent {
     var position: Vector2
-    var velocity: Vector2
+    var velocity: Vector2withAngleCache
     var forces: MutableList<Vector2>
 
     fun interact(sameSpecies: List<Agent>, differentSpecies : List<Agent>)
     fun move(){
-        position += velocity
+        position += velocity.vector
     }
 
     // TODO Optimize this with region algorithm
@@ -20,7 +21,7 @@ interface Agent {
         return filter { agent ->
             agent != this@Agent && agent.position.squaredDistanceTo(position) <= squaredPerceptionRadius
                     && (perceptionConeDegrees == 360.0
-                    || abs(velocity.angleDifference(agent.position - position)) <= perceptionConeDegrees / 2f)
+                    || abs(velocity.vector.angleDifference(agent.position - position)) <= perceptionConeDegrees / 2f)
         }
     }
 }

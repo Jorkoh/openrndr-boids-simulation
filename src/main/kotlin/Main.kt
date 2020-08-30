@@ -1,20 +1,8 @@
 import org.openrndr.application
-import org.openrndr.color.ColorRGBa
-import org.openrndr.extra.compositor.compose
-import org.openrndr.extra.compositor.draw
-import org.openrndr.extra.compositor.layer
-import org.openrndr.extra.compositor.post
-import org.openrndr.extra.fx.blur.FrameBlur
-import org.openrndr.extra.fx.blur.GaussianBloom
-import org.openrndr.extra.fx.color.ChromaticAberration
 import org.openrndr.extra.gui.GUI
-import org.openrndr.extra.noise.simplex
-import org.openrndr.math.Vector2
 import simulation.Simulation
 import simulation.Simulation.Settings.AREA_HEIGHT
 import simulation.Simulation.Settings.AREA_WIDTH
-import java.lang.Math.PI
-import kotlin.math.cos
 
 fun main() = application {
     configure {
@@ -46,48 +34,8 @@ fun main() = application {
             }
         }
 
-        // Declare the composition to render
-        val composition = compose {
-            layer {
-                draw {
-                    drawer.fill = ColorRGBa.WHITE
-
-                    val resolution = 8
-                    val points = mutableListOf<Vector2>()
-                    for (y in 0 until height / resolution) {
-                        for (x in 0 until width / resolution) {
-                            val xDouble = x.toDouble()
-                            val yDouble = y.toDouble()
-
-                            val simplex = simplex(100, xDouble + seconds, yDouble + seconds)
-                            if (simplex > 0.712) {
-                                points.add(Vector2(xDouble * resolution, yDouble * resolution))
-                            }
-                        }
-                    }
-                    drawer.points(points)
-                }
-                post(FrameBlur().apply { blend = 0.1 })
-            }
-            layer {
-                draw {
-                    Simulation.Renderer.renderBoids(drawer)
-                }
-                post(GaussianBloom().apply { sigma = 2.0 }, { gain = cos(seconds * 0.8 * PI) * 2.0 + 2.0 })
-                post(ChromaticAberration(), { aberrationFactor = cos(seconds * 0.8 * 0.5 * PI) * 4.0 })
-            }
-            layer {
-                draw {
-                    Simulation.Renderer.renderPredators(drawer)
-                }
-                post(GaussianBloom().apply { sigma = 2.0 }, { gain = cos(seconds * 0.8 * PI + PI) * 8.0 + 2.0 })
-            }
-            layer {
-                draw {
-                    Simulation.Renderer.renderDebug(drawer)
-                }
-            }
-        }
+        // Declare the composition to render, find available compositions at Compositions.kt
+        val composition = standardComposition()
 
         // Install the gui
         extend(gui)
@@ -98,7 +46,7 @@ fun main() = application {
         // Install the rendering loop
         extend {
             Simulation.update()
-//            composition.draw(drawer)
+            composition.draw(drawer)
 
             // (Optional) for performance checks
             numFrames++
