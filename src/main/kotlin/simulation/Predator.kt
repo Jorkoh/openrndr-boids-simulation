@@ -38,16 +38,14 @@ class Predator(
     }
 
     override fun interact(sameSpecies: List<Agent>, differentSpecies: List<Agent>) {
-        val visibleBoids = differentSpecies.visibleToAgent(PERCEPTION_RADIUS, PERCEPTION_CONE_DEGREES)
-        val visiblePredators = sameSpecies.visibleToAgent(PERCEPTION_RADIUS, PERCEPTION_CONE_DEGREES)
         forces.clear()
 
         forces.add(wallAvoidanceForce())
         if (differentSpecies.isNotEmpty()) {
-            forces.add(boidChasingForce(visibleBoids))
+            forces.add(boidChasingForce(differentSpecies))
         }
         if (sameSpecies.isNotEmpty()) {
-            forces.add(rivalAvoidanceForce(visiblePredators))
+            forces.add(rivalAvoidanceForce(sameSpecies))
         }
 
         velocity.vector = calculateNewVelocity()

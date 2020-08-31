@@ -1,4 +1,5 @@
 import org.openrndr.Application
+import org.openrndr.Fullscreen
 import org.openrndr.application
 import org.openrndr.extra.gui.GUI
 import org.openrndr.ffmpeg.ScreenRecorder
@@ -25,11 +26,8 @@ fun main() = application {
             add(SimulationRenderer.Settings, "Rendering settings")
         }
 
-        // Initialize the simulation
-        Simulation.init()
-
         // Initialize the simulation renderer
-        SimulationRenderer.init(this, gui)
+        SimulationRenderer.init(this)
 
         // Add a mouse listener to highlight specific agents
         mouse.clicked.listen { mouseEvent ->
@@ -44,26 +42,20 @@ fun main() = application {
         extend(gui)
 
         // (Optional) Install a screen recorder to get a video
-        extend(ScreenRecorder().apply { frameRate = 60 })
+//        extend(ScreenRecorder().apply { frameRate = 60 })
 
         // Install the rendering loop
         extend {
             Simulation.update()
             SimulationRenderer.activeComposition.draw(drawer)
 
-
-//            when(numFrames){
-//                900 -> SimulationRenderer.Settings.activeCompositionType = SimulationRenderer.Settings.CompositionType.Colorful
-//                1800 -> SimulationRenderer.Settings.activeCompositionType = SimulationRenderer.Settings.CompositionType.Night
-//                2700 -> application.exit()
-//            }
             // (Optional) for performance checks
             numFrames++
-//            if (numFrames % 375 == 0) {
-//                println("FPS: ${numFrames / (seconds - secondsLastPrint)}")
-//                numFrames = 0
-//                secondsLastPrint = seconds
-//            }
+            if (numFrames % 375 == 0) {
+                println("FPS: ${numFrames / (seconds - secondsLastPrint)}")
+                numFrames = 0
+                secondsLastPrint = seconds
+            }
         }
     }
 }

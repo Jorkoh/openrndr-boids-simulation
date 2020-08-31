@@ -2,6 +2,8 @@ import org.openrndr.Program
 import org.openrndr.color.ColorHSVa
 import org.openrndr.color.ColorRGBa
 import org.openrndr.color.ColorXSLa
+import org.openrndr.color.mix
+import org.openrndr.draw.Drawer
 import org.openrndr.extra.compositor.*
 import org.openrndr.extra.fx.blur.*
 import org.openrndr.extra.fx.color.ChromaticAberration
@@ -26,17 +28,17 @@ import kotlin.math.cos
 object SimulationRenderer {
     object Settings {
         enum class CompositionType {
-            Minimal,
+            Debug,
             Night,
             Colorful
         }
 
         @OptionParameter("Composition")
-        var activeCompositionType = CompositionType.Night
+        var activeCompositionType = CompositionType.Debug
             set(value) {
                 if (value == field) return
                 activeComposition = when (value) {
-                    CompositionType.Minimal -> program.minimalComposition()
+                    CompositionType.Debug -> program.debugComposition()
                     CompositionType.Night -> program.nightComposition()
                     CompositionType.Colorful -> program.colorfulComposition()
                 }
@@ -45,32 +47,41 @@ object SimulationRenderer {
     }
 
     private lateinit var program: Program
-    private lateinit var gui: GUI
 
     lateinit var activeComposition: Composite
         private set
 
 
-    fun init(program: Program, gui: GUI) {
+    fun init(program: Program) {
         this.program = program
-        this.gui = gui
-        activeComposition = program.minimalComposition()
+        activeComposition = program.debugComposition()
     }
 
-    // TODO add the region algorithm and showcase it on this composition
-    // TODO add a way to change number of boids on the fly to showcase this composition with more boids
-    fun Program.minimalComposition() = compose {
+    fun Program.debugComposition() = compose {
         draw {
-            drawer.fill = ColorRGBa.WHITE
+            drawer.clear(ColorRGBa.WHITE)
+
+            // Quad tree quads
+            drawer.fill = null
+            drawer.stroke = ColorRGBa.BLACK
+            drawer.strokeWeight = 0.6
+            Simulation.boidsQuad.children.draw(drawer)
+
+            // Boids
+            drawer.fill = ColorRGBa.BLACK
             drawer.stroke = null
-            val boidCircles = Simulation.boids.map { boid -> Circle(boid.position, 6.0) }
+            drawer.strokeWeight = 0.0
+            val boidCircles = Simulation.boids.map { boid -> Circle(boid.position, 5.0) }
             drawer.circles(boidCircles)
 
-            drawer.fill = ColorRGBa.RED
-            drawer.stroke = null
-            val predatorCircles = Simulation.predators.map { predator -> Circle(predator.position, 15.0) }
+            // Predators
+            drawer.stroke = ColorRGBa.BLACK
+            drawer.strokeWeight = 1.0
+            drawer.fill = ColorRGBa(0.129, 0.588, 0.953)
+            val predatorCircles = Simulation.predators.map { predator -> Circle(predator.position, 12.0) }
             drawer.circles(predatorCircles)
 
+            // Selected agent
             Simulation.selectedAgent?.let { agent ->
                 drawer.fill = null
                 drawer.stroke = ColorRGBa.GRAY
@@ -84,6 +95,17 @@ object SimulationRenderer {
                     drawer.stroke = ColorHSVa(360 * (index / agent.forces.size.toDouble()), 1.0, 0.5).toRGBa()
                     drawer.lineSegment(agent.position, agent.position + force * 20.0)
                 }
+            }
+        }
+    }
+
+    private fun List<QuadTree<Boid>>.draw(drawer: Drawer) {
+        forEach { child ->
+            if (child.children.isNotEmpty()) {
+                child.children.draw(drawer)
+            } else {
+                drawer.fill = mix(ColorRGBa.WHITE, ColorRGBa.RED, child.size / child.maxRegionCapacity.toDouble())
+                drawer.rectangle(child.bounds)
             }
         }
     }

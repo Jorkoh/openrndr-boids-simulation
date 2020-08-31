@@ -39,18 +39,17 @@ class Boid(
         )
     }
 
-    override fun interact(sameSpecies: List<Agent>, differentSpecies: List<Agent>) {
-        val visibleBoids = sameSpecies.visibleToAgent(PERCEPTION_RADIUS, PERCEPTION_CONE_DEGREES)
-        val visiblePredators = differentSpecies.visibleToAgent(PERCEPTION_RADIUS, PERCEPTION_CONE_DEGREES)
+    var oldPosition = position
 
+    override fun interact(sameSpecies: List<Agent>, differentSpecies: List<Agent>) {
         forces.clear()
         forces.add(wallAvoidanceForce())
-        if (visibleBoids.isNotEmpty()) {
-            forces.add(separationRuleForce(visibleBoids))
-            forces.add(alignmentRuleForce(visibleBoids))
-            forces.add(cohesionRuleForce(visibleBoids))
+        if (sameSpecies.isNotEmpty()) {
+            forces.add(separationRuleForce(sameSpecies))
+            forces.add(alignmentRuleForce(sameSpecies))
+            forces.add(cohesionRuleForce(sameSpecies))
         }
-        forces.add(predatorAvoidanceForce(visiblePredators))
+        forces.add(predatorAvoidanceForce(differentSpecies))
 
         velocity.vector = calculateNewVelocity()
     }
@@ -120,5 +119,10 @@ class Boid(
         newVelocity.vector = newVelocity.vector.clampLength(MINIMUM_SPEED, MAXIMUM_SPEED)
 
         return newVelocity.vector
+    }
+
+    override fun move() {
+        oldPosition = position
+        super.move()
     }
 }

@@ -1,11 +1,15 @@
 package simulation
 
+import QuadTree
+import angleDifference
 import org.openrndr.extra.parameters.DoubleParameter
 import org.openrndr.math.Vector2
+import org.openrndr.shape.Rectangle
+import kotlin.math.abs
 
 object Simulation {
     object Settings {
-        const val BOIDS_AMOUNT = 1000
+        const val BOIDS_AMOUNT = 2000
         const val PREDATOR_AMOUNT = 2
         const val AREA_WIDTH = 1600.0
         const val AREA_HEIGHT = 900.0
@@ -26,29 +30,67 @@ object Simulation {
         var COHESION_FACTOR = 0.05
     }
 
+    val boidsQuad = QuadTree<Boid>(Rectangle(0.0, 0.0, Settings.AREA_WIDTH, Settings.AREA_HEIGHT), 64)
+
     private val agents
         get() = boids + predators
     val boids = mutableListOf<Boid>()
     val predators = mutableListOf<Predator>()
+
     var selectedAgent: Agent? = null
 
-    fun init() {
-        boids.clear()
+    init {
         repeat(Settings.BOIDS_AMOUNT) {
             boids.add(Boid.createRandomBoid())
         }
-
-        predators.clear()
         repeat(Settings.PREDATOR_AMOUNT) {
             predators.add(Predator.createRandomPredator())
         }
+
+        boids.forEach { boid -> boidsQuad.add(boid.position, boid) }
     }
 
     fun update() {
-        boids.forEach { boid -> boid.interact(boids, predators) }
-        predators.forEach { predator -> predator.interact(predators, boids) }
+        boids.forEach { boid ->
+            boidsQuad.move(boid.position, boid.oldPosition, boid)
+        }
+
+        boids.forEach { boid ->
+            boid.interact(
+                boidsQuad.visibleToAgent(boid, Boid.PERCEPTION_RADIUS, Boid.PERCEPTION_CONE_DEGREES),
+                predators.visibleToAgent(boid, Boid.PERCEPTION_RADIUS, Boid.PERCEPTION_CONE_DEGREES)
+            )
+        }
+        predators.forEach { predator ->
+            predator.interact(
+                predators.visibleToAgent(predator, Predator.PERCEPTION_RADIUS, Predator.PERCEPTION_CONE_DEGREES),
+                boidsQuad.visibleToAgent(predator, Predator.PERCEPTION_RADIUS, Predator.PERCEPTION_CONE_DEGREES)
+            )
+        }
+
         agents.forEach { agent -> agent.move() }
     }
+
+    private fun List<Agent>.visibleToAgent(agent: Agent, perceptionRadius: Double, perceptionConeDegrees: Double) =
+        filter { otherAgent ->
+            otherAgent != agent && otherAgent.position.squaredDistanceTo(agent.position) <= perceptionRadius * perceptionRadius
+                    && (perceptionConeDegrees == 360.0
+                    || abs(agent.velocity.vector.angleDifference(otherAgent.position - agent.position)) <= perceptionConeDegrees / 2f)
+        }
+
+    private fun QuadTree<Boid>.visibleToAgent(agent: Agent, perceptionRadius: Double, perceptionConeDegrees: Double) =
+        queryRange(
+            Rectangle(
+                agent.position.x - perceptionRadius,
+                agent.position.y - perceptionRadius,
+                perceptionRadius * 2,
+                perceptionRadius * 2
+            )
+        ).filter { boid ->
+            boid != agent && boid.position.squaredDistanceTo(agent.position) <= perceptionRadius * perceptionRadius
+                    && (perceptionConeDegrees == 360.0
+                    || abs(agent.velocity.vector.angleDifference(boid.position - agent.position)) <= perceptionConeDegrees / 2f)
+        }
 
     fun getClosestAgent(position: Vector2) = agents.minBy { agent -> agent.position.distanceTo(position) }
 }
