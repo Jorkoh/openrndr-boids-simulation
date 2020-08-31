@@ -1,5 +1,7 @@
+import org.openrndr.Application
 import org.openrndr.application
 import org.openrndr.extra.gui.GUI
+import org.openrndr.ffmpeg.ScreenRecorder
 import simulation.Simulation
 import simulation.Simulation.Settings.AREA_HEIGHT
 import simulation.Simulation.Settings.AREA_WIDTH
@@ -16,14 +18,18 @@ fun main() = application {
         var numFrames = 0
         var secondsLastPrint = 0.0
 
-        // Initialize the simulation
-        Simulation.init()
-
         // Declare a gui for changing settings on the fly
         val gui = GUI().apply {
             compartmentsCollapsedByDefault = false
             add(Simulation.Settings, "Simulation settings")
+            add(SimulationRenderer.Settings, "Rendering settings")
         }
+
+        // Initialize the simulation
+        Simulation.init()
+
+        // Initialize the simulation renderer
+        SimulationRenderer.init(this, gui)
 
         // Add a mouse listener to highlight specific agents
         mouse.clicked.listen { mouseEvent ->
@@ -34,27 +40,30 @@ fun main() = application {
             }
         }
 
-        // Declare the composition to render, find available compositions at Compositions.kt
-        val composition = standardComposition()
-
         // Install the gui
         extend(gui)
 
         // (Optional) Install a screen recorder to get a video
-//        extend(ScreenRecorder().apply { frameRate = 60 })
+        extend(ScreenRecorder().apply { frameRate = 60 })
 
         // Install the rendering loop
         extend {
             Simulation.update()
-            composition.draw(drawer)
+            SimulationRenderer.activeComposition.draw(drawer)
 
+
+//            when(numFrames){
+//                900 -> SimulationRenderer.Settings.activeCompositionType = SimulationRenderer.Settings.CompositionType.Colorful
+//                1800 -> SimulationRenderer.Settings.activeCompositionType = SimulationRenderer.Settings.CompositionType.Night
+//                2700 -> application.exit()
+//            }
             // (Optional) for performance checks
             numFrames++
-            if (numFrames % 375 == 0) {
-                println("FPS: ${numFrames / (seconds - secondsLastPrint)}")
-                numFrames = 0
-                secondsLastPrint = seconds
-            }
+//            if (numFrames % 375 == 0) {
+//                println("FPS: ${numFrames / (seconds - secondsLastPrint)}")
+//                numFrames = 0
+//                secondsLastPrint = seconds
+//            }
         }
     }
 }

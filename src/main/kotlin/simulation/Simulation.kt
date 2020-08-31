@@ -1,18 +1,7 @@
 package simulation
 
-import org.openrndr.color.ColorHSVa
-import org.openrndr.color.ColorRGBa
-import org.openrndr.draw.Drawer
 import org.openrndr.extra.parameters.DoubleParameter
-import org.openrndr.math.Matrix44
 import org.openrndr.math.Vector2
-import org.openrndr.math.transforms.rotateZ
-import org.openrndr.math.transforms.scale
-import org.openrndr.math.transforms.translate
-import org.openrndr.shape.ShapeContour
-import org.openrndr.shape.contour
-import java.lang.Math.toDegrees
-import kotlin.math.atan2
 
 object Simulation {
     object Settings {
