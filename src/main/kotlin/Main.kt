@@ -1,8 +1,5 @@
-import org.openrndr.Application
-import org.openrndr.Fullscreen
 import org.openrndr.application
 import org.openrndr.extra.gui.GUI
-import org.openrndr.ffmpeg.ScreenRecorder
 import simulation.Simulation
 import simulation.Simulation.Settings.AREA_HEIGHT
 import simulation.Simulation.Settings.AREA_WIDTH
@@ -16,8 +13,7 @@ fun main() = application {
 
     program {
         // (Optional) for performance checks
-        var numFrames = 0
-        var secondsLastPrint = 0.0
+//        var secondsLastPrint = 0.0
 
         // Declare a gui for changing settings on the fly
         val gui = GUI().apply {
@@ -50,12 +46,10 @@ fun main() = application {
             SimulationRenderer.activeComposition.draw(drawer)
 
             // (Optional) for performance checks
-            numFrames++
-            if (numFrames % 375 == 0) {
-                println("FPS: ${numFrames / (seconds - secondsLastPrint)}")
-                numFrames = 0
-                secondsLastPrint = seconds
-            }
+//            if (frameCount % 375 == 0) {
+//                println("FPS: ${375 / (seconds - secondsLastPrint)}")
+//                secondsLastPrint = seconds
+//            }
         }
     }
 }

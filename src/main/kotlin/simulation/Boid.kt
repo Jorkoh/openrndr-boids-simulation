@@ -1,10 +1,10 @@
 package simulation
 
-import Vector2withAngleCache
-import clampAngleChange
-import clampLength
+import utils.Vector2withAngleCache
+import utils.clampAngleChange
+import utils.clampLength
 import org.openrndr.math.Vector2
-import setLength
+import utils.setLength
 import simulation.Simulation.Settings.AGENT_SPAWN_MARGIN
 import simulation.Simulation.Settings.ALIGNMENT_FACTOR
 import simulation.Simulation.Settings.AREA_HEIGHT
@@ -12,7 +12,7 @@ import simulation.Simulation.Settings.AREA_WIDTH
 import simulation.Simulation.Settings.COHESION_FACTOR
 import simulation.Simulation.Settings.PREDATOR_AVOIDANCE_FACTOR
 import simulation.Simulation.Settings.WALL_AVOIDANCE_FACTOR
-import unitWithAngle
+import utils.unitWithAngle
 import kotlin.math.max
 import kotlin.random.Random
 

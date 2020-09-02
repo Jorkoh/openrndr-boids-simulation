@@ -1,8 +1,10 @@
+package utils
+
 import org.openrndr.math.Vector2
 import org.openrndr.shape.Rectangle
 import org.openrndr.shape.intersects
 
-class QuadTree<T>(val bounds: Rectangle, val maxRegionCapacity: Int = 4) {
+class QuadTree<T>(val bounds: Rectangle, val maxRegionCapacity: Int = 64) {
 
     data class QuadTreeEntry<T>(var position: Vector2, val item: T)
 
@@ -33,7 +35,6 @@ class QuadTree<T>(val bounds: Rectangle, val maxRegionCapacity: Int = 4) {
             }
         }
     }
-
 
     fun remove(position: Vector2, item: T): Boolean {
         return when {
@@ -69,33 +70,16 @@ class QuadTree<T>(val bounds: Rectangle, val maxRegionCapacity: Int = 4) {
         entries.clear()
     }
 
-
     enum class MoveResult {
         MOVED_INSIDE_QUAD,
         CHANGED_QUAD,
         NOT_FOUND
     }
 
-
     fun move(newPosition: Vector2, oldPosition: Vector2, item: T) {
-        // Didn't actually move
-        if (newPosition == oldPosition) return
-
-        val nowInBounds = newPosition in bounds
-        val beforeInBounds = oldPosition in bounds
-
-        when {
-            // Moving outside of the quad bounds, ignore
-            !nowInBounds && !beforeInBounds -> return
-            // Went outside of the tree bounds, remove
-            !nowInBounds -> remove(oldPosition, item)
-            // Came from outside of the tree bounds, add
-            !beforeInBounds -> add(newPosition, item)
-            else -> {
-                if (moveEntry(newPosition, oldPosition, item) == MoveResult.CHANGED_QUAD) {
-                    remove(oldPosition, item)
-                }
-            }
+        if (moveEntry(newPosition, oldPosition, item) == MoveResult.CHANGED_QUAD) {
+            // quad change requires removal
+            remove(oldPosition, item)
         }
     }
 

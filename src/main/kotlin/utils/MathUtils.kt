@@ -1,3 +1,5 @@
+package utils
+
 import org.openrndr.math.Vector2
 import java.lang.Math.toDegrees
 import java.lang.Math.toRadians
@@ -6,7 +8,7 @@ import kotlin.math.cos
 import kotlin.math.sin
 import kotlin.math.sqrt
 
-// TODO way too many radians/angle transformations, it's cheap but not free
+// TODO way too many radians/utils.angle transformations, it's cheap but not free
 // TODO floats are not used (because openrndr uses Double) but could be used
 fun Vector2.Companion.unitWithAngle(angle: Double): Vector2 {
     val theta = toRadians(angle)

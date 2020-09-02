@@ -1,6 +1,6 @@
 package simulation
 
-import Vector2withAngleCache
+import utils.Vector2withAngleCache
 import org.openrndr.math.Vector2
 
 interface Agent {

@@ -5,10 +5,11 @@ import org.openrndr.color.ColorXSLa
 import org.openrndr.color.mix
 import org.openrndr.draw.Drawer
 import org.openrndr.extra.compositor.*
-import org.openrndr.extra.fx.blur.*
+import org.openrndr.extra.fx.blur.FrameBlur
+import org.openrndr.extra.fx.blur.GaussianBloom
+import org.openrndr.extra.fx.blur.HashBlur
 import org.openrndr.extra.fx.color.ChromaticAberration
 import org.openrndr.extra.fx.distort.Perturb
-import org.openrndr.extra.gui.GUI
 import org.openrndr.extra.noise.simplex
 import org.openrndr.extra.parameters.OptionParameter
 import org.openrndr.math.Matrix44
@@ -16,12 +17,14 @@ import org.openrndr.math.transforms.rotateZ
 import org.openrndr.math.transforms.scale
 import org.openrndr.math.transforms.translate
 import org.openrndr.shape.Circle
+import org.openrndr.shape.Segment
 import org.openrndr.shape.ShapeContour
 import org.openrndr.shape.contour
 import simulation.Agent
 import simulation.Boid
 import simulation.Predator
 import simulation.Simulation
+import utils.QuadTree
 import java.lang.Math.PI
 import kotlin.math.cos
 
@@ -64,38 +67,55 @@ object SimulationRenderer {
             // Quad tree quads
             drawer.fill = null
             drawer.stroke = ColorRGBa.BLACK
-            drawer.strokeWeight = 0.6
-            Simulation.boidsQuad.children.draw(drawer)
-
-            // Boids
-            drawer.fill = ColorRGBa.BLACK
-            drawer.stroke = null
-            drawer.strokeWeight = 0.0
-            val boidCircles = Simulation.boids.map { boid -> Circle(boid.position, 5.0) }
-            drawer.circles(boidCircles)
-
-            // Predators
-            drawer.stroke = ColorRGBa.BLACK
-            drawer.strokeWeight = 1.0
-            drawer.fill = ColorRGBa(0.129, 0.588, 0.953)
-            val predatorCircles = Simulation.predators.map { predator -> Circle(predator.position, 12.0) }
-            drawer.circles(predatorCircles)
+            drawer.strokeWeight = 0.4
+            Simulation.coroutinedBoidsQuad.children.draw(drawer)
 
             // Selected agent
             Simulation.selectedAgent?.let { agent ->
-                drawer.fill = null
-                drawer.stroke = ColorRGBa.GRAY
+                drawer.stroke = null
+                drawer.fill = ColorRGBa.GRAY.opacify(0.8)
+                drawer.strokeWeight = 0.0
                 when (agent) {
                     is Boid -> drawer.circle(agent.position, Boid.PERCEPTION_RADIUS)
                     is Predator -> drawer.circle(agent.position, Predator.PERCEPTION_RADIUS)
                 }
 
-                drawer.strokeWeight = 3.0
+                drawer.strokeWeight = 4.0
                 agent.forces.forEachIndexed { index, force ->
-                    drawer.stroke = ColorHSVa(360 * (index / agent.forces.size.toDouble()), 1.0, 0.5).toRGBa()
-                    drawer.lineSegment(agent.position, agent.position + force * 20.0)
+                    drawer.stroke = ColorHSVa(360 * (index / agent.forces.size.toDouble()), 1.0, 1.0).toRGBa()
+                    drawer.lineSegment(agent.position, agent.position + force * 60.0)
                 }
             }
+
+            // Boids
+            val boidBodies = Simulation.boids.map { boid -> Circle(boid.position, 5.0) }
+            val boidVelocities = Simulation.boids.map { boid ->
+                Segment(boid.position, boid.position + boid.velocity.vector * 4.0)
+            }
+            drawer.fill = ColorRGBa.BLACK
+            drawer.stroke = null
+            drawer.strokeWeight = 0.0
+            drawer.circles(boidBodies)
+
+            drawer.fill = null
+            drawer.stroke = ColorRGBa.BLACK
+            drawer.strokeWeight = 1.0
+            drawer.segments(boidVelocities)
+
+            // Predators
+            val predatorBodies = Simulation.predators.map { predator -> Circle(predator.position, 15.0) }
+            val predatorVelocities = Simulation.predators.map { predator ->
+                Segment(predator.position, predator.position + predator.velocity.vector * 10.0)
+            }
+            drawer.fill = ColorRGBa.BLACK
+            drawer.stroke = null
+            drawer.strokeWeight = 0.0
+            drawer.circles(predatorBodies)
+
+            drawer.fill = null
+            drawer.stroke = ColorRGBa.BLACK
+            drawer.strokeWeight = 1.0
+            drawer.segments(predatorVelocities)
         }
     }
 

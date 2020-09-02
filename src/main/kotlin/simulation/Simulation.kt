@@ -1,7 +1,11 @@
 package simulation
 
-import QuadTree
-import angleDifference
+import utils.CoroutinedBoidQuadTree
+import utils.QuadTree
+import utils.angleDifference
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 import org.openrndr.extra.parameters.DoubleParameter
 import org.openrndr.math.Vector2
 import org.openrndr.shape.Rectangle
@@ -9,7 +13,7 @@ import kotlin.math.abs
 
 object Simulation {
     object Settings {
-        const val BOIDS_AMOUNT = 2000
+        const val BOIDS_AMOUNT = 1500
         const val PREDATOR_AMOUNT = 2
         const val AREA_WIDTH = 1600.0
         const val AREA_HEIGHT = 900.0
@@ -30,7 +34,9 @@ object Simulation {
         var COHESION_FACTOR = 0.05
     }
 
-    val boidsQuad = QuadTree<Boid>(Rectangle(0.0, 0.0, Settings.AREA_WIDTH, Settings.AREA_HEIGHT), 64)
+    // To be fair separating the move tasks by quads to parallelize doesn't really give a performance benefit
+    // with boids amount <4000. Calculating the interactions in parallel does provide a real benefit
+    val coroutinedBoidsQuad = CoroutinedBoidQuadTree(Rectangle(0.0, 0.0, Settings.AREA_WIDTH, Settings.AREA_HEIGHT), 64)
 
     private val agents
         get() = boids + predators
@@ -47,25 +53,45 @@ object Simulation {
             predators.add(Predator.createRandomPredator())
         }
 
-        boids.forEach { boid -> boidsQuad.add(boid.position, boid) }
+        coroutinedBoidsQuad.addBoids(boids)
     }
 
     fun update() {
-        boids.forEach { boid ->
-            boidsQuad.move(boid.position, boid.oldPosition, boid)
-        }
+        coroutinedBoidsQuad.moveItems(boids)
 
-        boids.forEach { boid ->
-            boid.interact(
-                boidsQuad.visibleToAgent(boid, Boid.PERCEPTION_RADIUS, Boid.PERCEPTION_CONE_DEGREES),
-                predators.visibleToAgent(boid, Boid.PERCEPTION_RADIUS, Boid.PERCEPTION_CONE_DEGREES)
-            )
-        }
-        predators.forEach { predator ->
-            predator.interact(
-                predators.visibleToAgent(predator, Predator.PERCEPTION_RADIUS, Predator.PERCEPTION_CONE_DEGREES),
-                boidsQuad.visibleToAgent(predator, Predator.PERCEPTION_RADIUS, Predator.PERCEPTION_CONE_DEGREES)
-            )
+        runBlocking {
+            boids.forEach { boid ->
+                launch(Dispatchers.Default) {
+                    boid.interact(
+                        coroutinedBoidsQuad.visibleToAgent(
+                            boid,
+                            Boid.PERCEPTION_RADIUS,
+                            Boid.PERCEPTION_CONE_DEGREES
+                        ),
+                        predators.visibleToAgent(
+                            boid,
+                            Boid.PERCEPTION_RADIUS,
+                            Boid.PERCEPTION_CONE_DEGREES
+                        )
+                    )
+                }
+            }
+            predators.forEach { predator ->
+                launch(Dispatchers.Default) {
+                    predator.interact(
+                        predators.visibleToAgent(
+                            predator,
+                            Predator.PERCEPTION_RADIUS,
+                            Predator.PERCEPTION_CONE_DEGREES
+                        ),
+                        coroutinedBoidsQuad.visibleToAgent(
+                            predator,
+                            Predator.PERCEPTION_RADIUS,
+                            Predator.PERCEPTION_CONE_DEGREES
+                        )
+                    )
+                }
+            }
         }
 
         agents.forEach { agent -> agent.move() }
@@ -79,6 +105,24 @@ object Simulation {
         }
 
     private fun QuadTree<Boid>.visibleToAgent(agent: Agent, perceptionRadius: Double, perceptionConeDegrees: Double) =
+        queryRange(
+            Rectangle(
+                agent.position.x - perceptionRadius,
+                agent.position.y - perceptionRadius,
+                perceptionRadius * 2,
+                perceptionRadius * 2
+            )
+        ).filter { boid ->
+            boid != agent && boid.position.squaredDistanceTo(agent.position) <= perceptionRadius * perceptionRadius
+                    && (perceptionConeDegrees == 360.0
+                    || abs(agent.velocity.vector.angleDifference(boid.position - agent.position)) <= perceptionConeDegrees / 2f)
+        }
+
+    private fun CoroutinedBoidQuadTree.visibleToAgent(
+        agent: Agent,
+        perceptionRadius: Double,
+        perceptionConeDegrees: Double
+    ) =
         queryRange(
             Rectangle(
                 agent.position.x - perceptionRadius,
