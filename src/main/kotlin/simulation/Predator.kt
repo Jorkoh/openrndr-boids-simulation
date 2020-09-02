@@ -39,7 +39,6 @@ class Predator(
 
     override fun interact(sameSpecies: List<Agent>, differentSpecies: List<Agent>) {
         forces.clear()
-
         forces.add(wallAvoidanceForce())
         if (differentSpecies.isNotEmpty()) {
             forces.add(boidChasingForce(differentSpecies))

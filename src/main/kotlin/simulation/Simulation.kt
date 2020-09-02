@@ -57,7 +57,7 @@ object Simulation {
     }
 
     fun update() {
-        coroutinedBoidsQuad.moveItems(boids)
+        coroutinedBoidsQuad.moveBoids(boids)
 
         runBlocking {
             boids.forEach { boid ->
@@ -102,20 +102,6 @@ object Simulation {
             otherAgent != agent && otherAgent.position.squaredDistanceTo(agent.position) <= perceptionRadius * perceptionRadius
                     && (perceptionConeDegrees == 360.0
                     || abs(agent.velocity.vector.angleDifference(otherAgent.position - agent.position)) <= perceptionConeDegrees / 2f)
-        }
-
-    private fun QuadTree<Boid>.visibleToAgent(agent: Agent, perceptionRadius: Double, perceptionConeDegrees: Double) =
-        queryRange(
-            Rectangle(
-                agent.position.x - perceptionRadius,
-                agent.position.y - perceptionRadius,
-                perceptionRadius * 2,
-                perceptionRadius * 2
-            )
-        ).filter { boid ->
-            boid != agent && boid.position.squaredDistanceTo(agent.position) <= perceptionRadius * perceptionRadius
-                    && (perceptionConeDegrees == 360.0
-                    || abs(agent.velocity.vector.angleDifference(boid.position - agent.position)) <= perceptionConeDegrees / 2f)
         }
 
     private fun CoroutinedBoidQuadTree.visibleToAgent(

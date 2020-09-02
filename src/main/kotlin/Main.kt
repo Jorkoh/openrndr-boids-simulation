@@ -15,12 +15,12 @@ fun main() = application {
         // (Optional) for performance checks
 //        var secondsLastPrint = 0.0
 
-        // Declare a gui for changing settings on the fly
-        val gui = GUI().apply {
+        // Install a gui for changing settings on the fly
+        extend(GUI().apply {
             compartmentsCollapsedByDefault = false
             add(Simulation.Settings, "Simulation settings")
             add(SimulationRenderer.Settings, "Rendering settings")
-        }
+        })
 
         // Initialize the simulation renderer
         SimulationRenderer.init(this)
@@ -33,9 +33,6 @@ fun main() = application {
                 Simulation.selectedAgent = null
             }
         }
-
-        // Install the gui
-        extend(gui)
 
         // (Optional) Install a screen recorder to get a video
 //        extend(ScreenRecorder().apply { frameRate = 60 })

@@ -56,7 +56,7 @@ class CoroutinedBoidQuadTree(private val bounds: Rectangle, maxRegionCapacity: I
         processTasks()
     }
 
-    fun moveItems(boids: List<Boid>) {
+    fun moveBoids(boids: List<Boid>) {
         for (boid in boids) {
             // The position hasn't actually changed, ignore
             if (boid.position == boid.oldPosition) continue
