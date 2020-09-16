@@ -1,6 +1,6 @@
 # Boids simulation with OPENRNDR
 
-[![Demo in YouTube](https://i.imgur.com/d6VM9fb.png)](https://www.youtube.com/watch?v=6SdYMsDuIJg "Demo in YouTube")
+[![Demo on YouTube](https://i.imgur.com/d6VM9fb.png)](https://www.youtube.com/watch?v=6SdYMsDuIJg "Demo on YouTube")
 
 Classic [boids simulation](https://www.red3d.com/cwr/boids/) where each agent is only aware of other agents in close proximity (range shown at 0:40) and follows the three basic rules first defined by Craig Reynolds:
 
